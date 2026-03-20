@@ -19,22 +19,24 @@ st.title("💰 Kişisel Bütçe Takip Sistemi")
 
 # Verileri Çek
 df = pd.read_sql_query("SELECT * FROM islemler ORDER BY id DESC", conn)
-gelir_toplam = df[df['tip'] == 'GELİR']['miktar'].sum()
-gider_toplam = df[df['tip'] == 'GİDER']['miktar'].sum()
+gelir_toplam = df[df['tip'] == 'GELİR']['miktar'].sum() if not df.empty else 0.0
+gider_toplam = df[df['tip'] == 'GİDER']['miktar'].sum() if not df.empty else 0.0
 bakiye = gelir_toplam - gider_toplam
 
 # --- ÜST ÖZET PANELİ ---
 col1, col2, col3 = st.columns(3)
 col1.metric("Toplam Bakiye", f"{bakiye:,.2f} TL")
-col2.metric("Toplam Gider", f"{gider_toplam:,.2f} TL", delta_color="inverse")
+col2.metric("Toplam Gider", f"{gider_toplam:,.2f} TL")
 
-# En Çok Harcanan Kategoriyi Bul
-if not df[df['tip'] == 'GİDER'].empty:
-    en_cok_kat = df[df['tip'] == 'GİDER'].groupby('kategori')['miktar'].sum().idxmax()
-    en_cok_tutar = df[df['tip'] == 'GİDER'].groupby('kategori')['miktar'].sum().max()
+# En Çok Harcanan Kategori Kontrolü (Hatanın çözümü burada)
+gider_df = df[df['tip'] == 'GİDER']
+if not gider_df.empty:
+    kat_ozet = gider_df.groupby('kategori')['miktar'].sum()
+    en_cok_kat = kat_ozet.idxmax()
+    en_cok_tutar = kat_ozet.max()
     col3.metric("En Çok Harcanan", en_cok_kat, f"{en_cok_tutar:,.2f} TL")
 else:
-    col3.metric("En Çok Harcanan", "Veri Yok")
+    col3.metric("En Çok Harcanan", "Veri Yok", "0 TL")
 
 st.divider()
 
@@ -57,9 +59,12 @@ with st.expander("➕ Yeni İşlem Ekle", expanded=True):
 
 # --- TABLO ---
 st.subheader("📜 İşlem Geçmişi")
-st.dataframe(df[['tarih', 'tip', 'kategori', 'aciklama', 'miktar']], use_container_width=True, hide_index=True)
+if not df.empty:
+    st.dataframe(df[['tarih', 'tip', 'kategori', 'aciklama', 'miktar']], use_container_width=True, hide_index=True)
+else:
+    st.info("Henüz hiç işlem girmediniz. Yukarıdaki formdan ekleme yapabilirsiniz.")
 
-# Veri Sıfırlama (Kenar Çubuğunda)
+# Veri Sıfırlama
 if st.sidebar.button("🗑️ Tüm Verileri Temizle"):
     conn.execute("DELETE FROM islemler")
     conn.commit()
