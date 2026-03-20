@@ -28,13 +28,19 @@ col1, col2, col3 = st.columns(3)
 col1.metric("Toplam Bakiye", f"{bakiye:,.2f} TL")
 col2.metric("Toplam Gider", f"{gider_toplam:,.2f} TL")
 
-# En Çok Harcanan Kategori Kontrolü (Hatanın çözümü burada)
+# En Çok Harcanan Kategori Kontrolü (HATA BURADA ÇÖZÜLDÜ)
 gider_df = df[df['tip'] == 'GİDER']
 if not gider_df.empty:
-    kat_ozet = gider_df.groupby('kategori')['miktar'].sum()
-    en_cok_kat = kat_ozet.idxmax()
-    en_cok_tutar = kat_ozet.max()
-    col3.metric("En Çok Harcanan", en_cok_kat, f"{en_cok_tutar:,.2f} TL")
+    # dropna=False ile kategorisi olmayan eski verileri de hesaba katıyoruz
+    kat_ozet = gider_df.groupby('kategori', dropna=False)['miktar'].sum()
+    if not kat_ozet.empty:
+        en_cok_kat = kat_ozet.idxmax()
+        if pd.isna(en_cok_kat) or en_cok_kat is None:
+            en_cok_kat = "Eski/Kategorisiz"
+        en_cok_tutar = kat_ozet.max()
+        col3.metric("En Çok Harcanan", str(en_cok_kat), f"{en_cok_tutar:,.2f} TL")
+    else:
+        col3.metric("En Çok Harcanan", "Belirsiz", f"{gider_toplam:,.2f} TL")
 else:
     col3.metric("En Çok Harcanan", "Veri Yok", "0 TL")
 
