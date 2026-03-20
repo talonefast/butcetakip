@@ -23,26 +23,26 @@ gelir_toplam = df[df['tip'] == 'GELİR']['miktar'].sum() if not df.empty else 0.
 gider_toplam = df[df['tip'] == 'GİDER']['miktar'].sum() if not df.empty else 0.0
 bakiye = gelir_toplam - gider_toplam
 
-# --- ÜST ÖZET PANELİ ---
-col1, col2, col3 = st.columns(3)
+# --- ÜST ÖZET PANELİ (Artık 4 Kutu Var) ---
+col1, col2, col3, col4 = st.columns(4)
 col1.metric("Toplam Bakiye", f"{bakiye:,.2f} TL")
-col2.metric("Toplam Gider", f"{gider_toplam:,.2f} TL")
+col2.metric("Toplam Gelir", f"{gelir_toplam:,.2f} TL")
+col3.metric("Toplam Gider", f"{gider_toplam:,.2f} TL")
 
-# En Çok Harcanan Kategori Kontrolü (HATA BURADA ÇÖZÜLDÜ)
+# En Çok Harcanan Kategori Kontrolü
 gider_df = df[df['tip'] == 'GİDER']
 if not gider_df.empty:
-    # dropna=False ile kategorisi olmayan eski verileri de hesaba katıyoruz
     kat_ozet = gider_df.groupby('kategori', dropna=False)['miktar'].sum()
     if not kat_ozet.empty:
         en_cok_kat = kat_ozet.idxmax()
         if pd.isna(en_cok_kat) or en_cok_kat is None:
             en_cok_kat = "Eski/Kategorisiz"
         en_cok_tutar = kat_ozet.max()
-        col3.metric("En Çok Harcanan", str(en_cok_kat), f"{en_cok_tutar:,.2f} TL")
+        col4.metric("En Çok Harcanan", str(en_cok_kat), f"{en_cok_tutar:,.2f} TL")
     else:
-        col3.metric("En Çok Harcanan", "Belirsiz", f"{gider_toplam:,.2f} TL")
+        col4.metric("En Çok Harcanan", "Belirsiz", f"{gider_toplam:,.2f} TL")
 else:
-    col3.metric("En Çok Harcanan", "Veri Yok", "0 TL")
+    col4.metric("En Çok Harcanan", "Veri Yok", "0 TL")
 
 st.divider()
 
